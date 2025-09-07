@@ -8,7 +8,7 @@ A client-server Todo List management system built with Java, featuring real-time
 - **Board Management**: Create and manage collaborative boards
 - **Task Management**: Full CRUD operations for tasks with priorities and status tracking
 - **Real-time Notifications**: Server pushes updates to all connected clients
-- **Persistent Storage**: Data is saved to JSON files on the server
+- **Persistent Storage**: Data is saved to SQLite database with JDBC
 - **JSON Protocol**: All communication uses structured JSON messages
 
 ## Quick Start
@@ -29,6 +29,8 @@ In the client, try these commands:
 > register root toor
 > login root toor
 > create_board My Project
+> list_boards
+> view_board <boardID_from_list_boards>
 > add_task Complete report Write the quarterly report HIGH
 > list_tasks
 > help
@@ -74,10 +76,22 @@ src/main/java/com/todo/
 └── util/             # Utility classes
 ```
 
+## Database Implementation
+
+The application uses SQLite database with JDBC for persistent storage:
+
+- **Database**: `todo.db` (created automatically on first run)
+- **Tables**: 
+  - `users` - User accounts with secure password hashing
+  - `boards` - Project boards with ownership tracking
+  - `board_members` - Many-to-many relationship between users and boards
+  - `tasks` - Tasks with priorities, status, and board association
+- **Features**: Foreign key constraints, automatic table creation, thread-safe operations
+
 ## Technical Details
 
 - **Concurrency**: Uses ReadWriteLock for thread-safe data access
 - **Security**: SHA-256 password hashing with salt
 - **Real-time**: Server pushes notifications to relevant clients
-- **Storage**: JSON file-based persistence with automatic loading/saving
+- **Storage**: SQLite database with JDBC for persistent data storage
 - **Protocol**: JSON-based communication over TCP sockets

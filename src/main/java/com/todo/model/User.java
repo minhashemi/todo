@@ -29,10 +29,12 @@ public class User {
 
     // Getters and setters
     public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public String getSalt() { return salt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public Set<String> getOwnedBoards() { return ownedBoards; }
     public Set<String> getMemberBoards() { return memberBoards; }
 

@@ -238,6 +238,16 @@ public class Client {
                 if (response.getData() != null) {
                     System.out.println("Data: " + response.getData());
                 }
+                
+                // Handle view_board success - set board view mode
+                if (response.getMessage().contains("Entering board view mode")) {
+                    inBoardView.set(true);
+                    // Extract board ID from the data if it's a Board object
+                    if (response.getData() instanceof com.todo.model.Board) {
+                        com.todo.model.Board board = (com.todo.model.Board) response.getData();
+                        currentBoardId = board.getId();
+                    }
+                }
             } else if ("unauthorized".equals(response.getStatus())) {
                 System.out.println("✗ Unauthorized: " + response.getMessage());
             } else {

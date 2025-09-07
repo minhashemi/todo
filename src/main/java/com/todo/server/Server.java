@@ -28,6 +28,7 @@ public class Server {
     private final Map<String, PrintWriter> connectedClients;
     private final Map<String, String> userSessions;
     private final Map<String, String> clientToUser;
+    private final Map<String, String> clientCurrentBoard;
     private final ExecutorService threadPool;
     private boolean running;
 
@@ -36,6 +37,7 @@ public class Server {
         this.connectedClients = new ConcurrentHashMap<>();
         this.userSessions = new ConcurrentHashMap<>();
         this.clientToUser = new ConcurrentHashMap<>();
+        this.clientCurrentBoard = new ConcurrentHashMap<>();
         this.threadPool = Executors.newCachedThreadPool();
         this.running = false;
     }
@@ -297,6 +299,9 @@ public class Server {
                 return Message.error("Access denied");
             }
             
+            // Store the current board for this client
+            clientCurrentBoard.put(clientId, boardId);
+            
             return Message.success("Entering board view mode for: " + board.getName(), board);
         }
 
@@ -304,6 +309,12 @@ public class Server {
             String userId = userSessions.get(clientId);
             if (userId == null) {
                 return Message.unauthorized("Not logged in");
+            }
+            
+            // Check if client is in board view mode
+            String currentBoardId = clientCurrentBoard.get(clientId);
+            if (currentBoardId == null) {
+                return Message.error("You must be in board view mode. Use 'view_board <boardID>' first.");
             }
             
             Gson gson = GsonUtil.createGson();
@@ -320,14 +331,11 @@ public class Server {
                 return Message.error("Invalid priority. Use: LOW, MEDIUM, HIGH");
             }
             
-            // For simplicity, we'll use the last viewed board
-            // In a real implementation, you'd track the current board context
-            List<Board> userBoards = storage.getBoardsForUser(userId);
-            if (userBoards.isEmpty()) {
-                return Message.error("No boards available");
+            Board currentBoard = storage.getBoardById(currentBoardId);
+            if (currentBoard == null) {
+                return Message.error("Current board not found");
             }
             
-            Board currentBoard = userBoards.get(0); // Use first board for now
             Task task = new Task(title, description, priority, currentBoard.getId());
             storage.addTask(task);
             
@@ -344,14 +352,13 @@ public class Server {
                 return Message.unauthorized("Not logged in");
             }
             
-            List<Board> userBoards = storage.getBoardsForUser(userId);
-            if (userBoards.isEmpty()) {
-                return Message.error("No boards available");
+            // Check if client is in board view mode
+            String currentBoardId = clientCurrentBoard.get(clientId);
+            if (currentBoardId == null) {
+                return Message.error("You must be in board view mode. Use 'view_board <boardID>' first.");
             }
             
-            Board currentBoard = userBoards.get(0); // Use first board for now
-            List<Task> tasks = storage.getTasksForBoard(currentBoard.getId());
-            
+            List<Task> tasks = storage.getTasksForBoard(currentBoardId);
             return Message.success("Tasks retrieved successfully", tasks);
         }
 

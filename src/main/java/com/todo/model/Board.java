@@ -26,9 +26,11 @@ public class Board {
 
     // Getters and setters
     public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getName() { return name; }
     public String getOwnerId() { return ownerId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public Set<String> getMemberIds() { return memberIds; }
 
     public void addMember(String userId) {

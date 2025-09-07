@@ -1,16 +1,11 @@
-# Maven
+# Maven build artifacts
 target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
+*.jar
+*.war
+*.ear
+*.class
 
-# IDE
+# IDE files
 .idea/
 *.iml
 *.ipr
@@ -20,7 +15,7 @@ buildNumber.properties
 .project
 .classpath
 
-# OS
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -29,29 +24,25 @@ buildNumber.properties
 ehthumbs.db
 Thumbs.db
 
-# Application data files
-*.json
-!pom.xml
+# Database files (SQLite)
+*.db
+*.sqlite
+*.sqlite3
 
-# Logs
+# Log files
 *.log
-logs/
 
 # Temporary files
 *.tmp
 *.temp
 *~
 
-# Java
+# Java specific
 *.class
 *.jar
 *.war
 *.ear
-*.zip
-*.tar.gz
-*.rar
+hs_err_pid*
 
-# Test files
-test_*.txt
-*Test.java
-*_test.java
+# Maven wrapper (if not using system Maven)
+.mvn/wrapper/maven-wrapper.jar

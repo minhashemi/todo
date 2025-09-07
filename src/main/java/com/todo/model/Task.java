@@ -35,12 +35,14 @@ public class Task {
 
     // Getters and setters
     public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public Status getStatus() { return status; }
     public Priority getPriority() { return priority; }
     public String getBoardId() { return boardId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public void setStatus(Status status) {
         this.status = status;
