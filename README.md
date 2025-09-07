@@ -14,17 +14,29 @@ A client-server Todo List management system built with Java, featuring real-time
 ## Quick Start
 
 ### 1. Start the Server
-- Open `src/main/java/com/todo/server/ServerMain.java`
-- Click the **Run** button (▶️) or use `Ctrl+Shift+F10`
-- You should see: `Server started on TCP port 8080 and UDP port 8081`
+```bash
+mvn exec:java -Dexec.mainClass="com.todo.server.ServerMain"
+```
 
-### 2. Start the Client
-- Open `src/main/java/com/todo/client/ClientMain.java` 
-- Click the **Run** button (▶️) or use `Ctrl+Shift+F10`
-- You should see the client connect and show the command prompt
+### 2. Start the GUI Client
+```bash
+mvn exec:java -Dexec.mainClass="com.todo.gui.GUIMain"
+```
 
-### 3. Test Commands
-In the client, try these commands:
+### 3. Alternative: Command Line Client
+```bash
+mvn exec:java -Dexec.mainClass="com.todo.client.ClientMain"
+```
+
+### 4. GUI Features
+The GUI provides a simple interface with:
+- **Login/Register Panel**: User authentication
+- **Board Management**: Create and view boards
+- **Task Management**: Add and view tasks with priorities
+- **Status Bar**: Shows current user and connection status
+
+### 5. Command Line Test Commands
+For the command line client:
 ```
 > register root toor
 > login root toor
@@ -68,7 +80,8 @@ In the client, try these commands:
 
 ```
 src/main/java/com/todo/
-├── client/           # Client-side code
+├── client/           # Command line client
+├── gui/              # Swing GUI client
 ├── server/           # Server-side code
 ├── model/            # Data models (User, Board, Task)
 ├── protocol/         # JSON message protocol

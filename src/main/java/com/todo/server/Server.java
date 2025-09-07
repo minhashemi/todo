@@ -211,7 +211,7 @@ public class Server {
             
             userSessions.put(clientId, user.getId());
             clientToUser.put(clientId, user.getId());
-            return Message.success("Login successful", null);
+            return Message.success("Login successful", user.getId());
         }
 
         private Message handleLogout() {
