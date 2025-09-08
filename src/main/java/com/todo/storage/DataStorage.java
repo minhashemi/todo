@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class DataStorage {
+public class DataStorage implements DataStorageInterface {
     private static final String DATABASE_URL = "jdbc:sqlite:todo.db";
     
     private final ReadWriteLock lock = new ReentrantReadWriteLock();

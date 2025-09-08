@@ -20,7 +20,7 @@ mvn exec:java -Dexec.mainClass="com.todo.server.ServerMain"
 
 ### 2. Start the GUI Client
 ```bash
-mvn exec:java -Dexec.mainClass="com.todo.gui.GUIMain"
+mvn exec:java -Dexec.mainClass="com.todo.gui.TodoGUI"
 ```
 
 ### 3. Alternative: Command Line Client
@@ -81,10 +81,12 @@ For the command line client:
 ```
 src/main/java/com/todo/
 ├── client/           # Command line client
+├── core/             # Core interfaces and design patterns
 ├── gui/              # Swing GUI client
-├── server/           # Server-side code
 ├── model/            # Data models (User, Board, Task)
 ├── protocol/         # JSON message protocol
+├── server/           # Server-side code
+│   └── commands/     # Command pattern implementations
 ├── storage/          # Data persistence layer
 └── util/             # Utility classes
 ```
