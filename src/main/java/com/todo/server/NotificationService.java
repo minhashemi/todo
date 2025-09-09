@@ -151,16 +151,23 @@ public class NotificationService {
     /**
      * Notify board members when a user is added to the board
      */
-    public void notifyUserAddedToBoard(String boardId, String newUserId) {
+    public void notifyUserAddedToBoard(String boardId, String newUserId, String adderUserId) {
         User newUser = storage.getUserById(newUserId);
-        if (newUser != null) {
+        User adderUser = storage.getUserById(adderUserId);
+        
+        System.out.println("DEBUG: notifyUserAddedToBoard called with:");
+        System.out.println("  - newUserId: " + newUserId + " (username: " + (newUser != null ? newUser.getUsername() : "null") + ")");
+        System.out.println("  - adderUserId: " + adderUserId + " (username: " + (adderUser != null ? adderUser.getUsername() : "null") + ")");
+        
+        if (newUser != null && adderUser != null) {
             String message = "User " + newUser.getUsername() + " added to board";
             
             // Send notification to all existing board members
             broadcastBoardNotification(boardId, "user_added", newUser.getUsername());
             
-            // Send direct notification to the newly added user
-            sendNotificationToUser(newUserId, "user_added_to_board", newUser.getUsername());
+            // Send direct notification to the newly added user with the adder's username
+            System.out.println("DEBUG: Sending notification to user " + newUserId + " with adder username: " + adderUser.getUsername());
+            sendNotificationToUser(newUserId, "user_added_to_board", adderUser.getUsername());
             
             sendUdpNotification("USER_ADDED:" + boardId + ":" + newUser.getUsername());
         }

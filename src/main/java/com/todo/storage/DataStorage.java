@@ -164,8 +164,10 @@ public class DataStorage implements DataStorageInterface {
                 stmt.executeUpdate();
             }
             
-            // Add owner as member
-            addBoardMember(board.getId(), board.getOwnerId());
+            // Add all members to the board_members table
+            for (String memberId : board.getMemberIds()) {
+                addBoardMember(board.getId(), memberId);
+            }
         } catch (SQLException e) {
             System.err.println("Error adding board: " + e.getMessage());
         } finally {

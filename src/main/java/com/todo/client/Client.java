@@ -348,14 +348,29 @@ public class Client {
             if (data instanceof List) {
                 List<?> dataList = (List<?>) data;
                 if (!dataList.isEmpty() && dataList.get(0) instanceof com.google.gson.JsonObject) {
-                    // Convert JsonObject list to Board list
-                    List<Board> boards = new ArrayList<>();
-                    for (Object item : dataList) {
-                        Board board = gson.fromJson(gson.toJson(item), Board.class);
-                        boards.add(board);
+                    com.google.gson.JsonObject firstItem = (com.google.gson.JsonObject) dataList.get(0);
+                    
+                    // Check if it's a task (has title field)
+                    if (firstItem.has("title")) {
+                        List<Task> tasks = new ArrayList<>();
+                        for (Object item : dataList) {
+                            Task task = gson.fromJson(gson.toJson(item), Task.class);
+                            tasks.add(task);
+                        }
+                        displayTasks(tasks);
+                        return;
                     }
-                    displayBoards(boards);
-                    return;
+                    
+                    // Check if it's a board (has ownerId field)
+                    if (firstItem.has("ownerId")) {
+                        List<Board> boards = new ArrayList<>();
+                        for (Object item : dataList) {
+                            Board board = gson.fromJson(gson.toJson(item), Board.class);
+                            boards.add(board);
+                        }
+                        displayBoards(boards);
+                        return;
+                    }
                 }
             }
             

@@ -50,13 +50,20 @@ public class AddUserToBoardCommand implements Command {
             return Message.error("Target user not found");
         }
         
+        System.out.println("DEBUG: Before adding member - Board members: " + board.getMemberIds());
         board.addMember(targetUserId);
+        System.out.println("DEBUG: After adding member - Board members: " + board.getMemberIds());
+        
         targetUser.addMemberBoard(boardId);
         storage.addBoard(board);
         storage.addUser(targetUser);
         
+        // Verify the board was updated in database
+        Board updatedBoard = storage.getBoardById(boardId);
+        System.out.println("DEBUG: Board from database after update - Members: " + updatedBoard.getMemberIds());
+        
         // Send notification to all board members
-        notificationService.notifyUserAddedToBoard(boardId, targetUserId);
+        notificationService.notifyUserAddedToBoard(boardId, targetUserId, userId);
         
         return Message.success("User added to board successfully", null);
     }
