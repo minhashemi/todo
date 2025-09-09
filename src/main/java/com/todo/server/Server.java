@@ -13,8 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
-    private static final int TCP_PORT = 8080;
-    private static final int UDP_PORT = 8081;
+    private static final int TCP_PORT = 9999;
+    private static final int UDP_PORT = 9998;
     
     private final DataStorageInterface storage;
     private final Map<String, PrintWriter> connectedClients;
@@ -23,6 +23,7 @@ public class Server {
     private final Map<String, String> clientCurrentBoard;
     private final ExecutorService threadPool;
     private final CommandFactory commandFactory;
+    private final NotificationService notificationService;
     private boolean running;
 
     public Server(DataStorageInterface storage) {
@@ -32,7 +33,8 @@ public class Server {
         this.clientToUser = new ConcurrentHashMap<>();
         this.clientCurrentBoard = new ConcurrentHashMap<>();
         this.threadPool = Executors.newCachedThreadPool();
-        this.commandFactory = new CommandFactory(storage, userSessions, clientToUser, clientCurrentBoard);
+        this.notificationService = new NotificationService(connectedClients, clientToUser, userSessions, storage, UDP_PORT);
+        this.commandFactory = new CommandFactory(storage, userSessions, clientToUser, clientCurrentBoard, notificationService);
         this.running = false;
     }
 

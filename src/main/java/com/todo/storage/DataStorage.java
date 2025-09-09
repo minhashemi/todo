@@ -89,7 +89,7 @@ public class DataStorage implements DataStorageInterface {
                 stmt.setString(2, user.getUsername());
                 stmt.setString(3, user.getPasswordHash());
                 stmt.setString(4, user.getSalt());
-                stmt.setString(5, user.getCreatedAt().toString());
+                stmt.setString(5, user.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
@@ -146,7 +146,7 @@ public class DataStorage implements DataStorageInterface {
             rs.getString("salt")
         );
         user.setId(rs.getString("id"));
-        user.setCreatedAt(LocalDateTime.parse(rs.getString("created_at")));
+        user.setCreatedAt(LocalDateTime.parse(rs.getString("created_at"), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return user;
     }
 
@@ -160,7 +160,7 @@ public class DataStorage implements DataStorageInterface {
                 stmt.setString(1, board.getId());
                 stmt.setString(2, board.getName());
                 stmt.setString(3, board.getOwnerId());
-                stmt.setString(4, board.getCreatedAt().toString());
+                stmt.setString(4, board.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 stmt.executeUpdate();
             }
             
@@ -225,7 +225,7 @@ public class DataStorage implements DataStorageInterface {
     private Board createBoardFromResultSet(ResultSet rs) throws SQLException {
         Board board = new Board(rs.getString("name"), rs.getString("owner_id"));
         board.setId(rs.getString("id"));
-        board.setCreatedAt(LocalDateTime.parse(rs.getString("created_at")));
+        board.setCreatedAt(LocalDateTime.parse(rs.getString("created_at"), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return board;
     }
 
@@ -270,7 +270,7 @@ public class DataStorage implements DataStorageInterface {
                 stmt.setString(4, task.getStatus().name());
                 stmt.setString(5, task.getPriority().name());
                 stmt.setString(6, task.getBoardId());
-                stmt.setString(7, task.getCreatedAt().toString());
+                stmt.setString(7, task.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
@@ -365,7 +365,7 @@ public class DataStorage implements DataStorageInterface {
         );
         task.setId(rs.getString("id"));
         task.setStatus(Task.Status.valueOf(rs.getString("status")));
-        task.setCreatedAt(LocalDateTime.parse(rs.getString("created_at")));
+        task.setCreatedAt(LocalDateTime.parse(rs.getString("created_at"), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return task;
     }
 }

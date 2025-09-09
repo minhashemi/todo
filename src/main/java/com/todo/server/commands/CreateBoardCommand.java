@@ -6,6 +6,7 @@ import com.todo.protocol.CreateBoardPayload;
 import com.todo.protocol.Message;
 import com.todo.core.Command;
 import com.todo.storage.DataStorageInterface;
+import com.todo.server.NotificationService;
 import com.todo.util.GsonUtil;
 import com.google.gson.Gson;
 import java.util.Map;
@@ -13,10 +14,14 @@ import java.util.Map;
 public class CreateBoardCommand implements Command {
     private final DataStorageInterface storage;
     private final Map<String, String> userSessions;
+    private final NotificationService notificationService;
     
-    public CreateBoardCommand(DataStorageInterface storage, Map<String, String> userSessions) {
+    public CreateBoardCommand(DataStorageInterface storage, 
+                            Map<String, String> userSessions,
+                            NotificationService notificationService) {
         this.storage = storage;
         this.userSessions = userSessions;
+        this.notificationService = notificationService;
     }
     
     @Override
@@ -36,6 +41,9 @@ public class CreateBoardCommand implements Command {
         User user = storage.getUserById(userId);
         user.addOwnedBoard(board.getId());
         storage.addUser(user);
+        
+        // Send notification to the creator
+        notificationService.notifyBoardCreated(board.getId(), userId);
         
         return Message.success("Board created successfully", board.getId());
     }

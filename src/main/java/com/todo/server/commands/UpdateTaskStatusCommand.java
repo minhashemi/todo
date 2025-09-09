@@ -4,6 +4,7 @@ import com.todo.model.Task;
 import com.todo.protocol.Message;
 import com.todo.core.Command;
 import com.todo.storage.DataStorageInterface;
+import com.todo.server.NotificationService;
 import com.todo.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -12,10 +13,14 @@ import java.util.Map;
 public class UpdateTaskStatusCommand implements Command {
     private final DataStorageInterface storage;
     private final Map<String, String> userSessions;
+    private final NotificationService notificationService;
     
-    public UpdateTaskStatusCommand(DataStorageInterface storage, Map<String, String> userSessions) {
+    public UpdateTaskStatusCommand(DataStorageInterface storage, 
+                                 Map<String, String> userSessions,
+                                 NotificationService notificationService) {
         this.storage = storage;
         this.userSessions = userSessions;
+        this.notificationService = notificationService;
     }
     
     @Override
@@ -44,6 +49,9 @@ public class UpdateTaskStatusCommand implements Command {
         
         task.setStatus(status);
         storage.updateTask(task);
+        
+        // Send notification to all board members
+        notificationService.notifyTaskUpdated(task.getBoardId(), task);
         
         return Message.success("Task status updated successfully", null);
     }

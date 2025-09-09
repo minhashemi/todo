@@ -5,6 +5,7 @@ import com.todo.model.User;
 import com.todo.protocol.Message;
 import com.todo.core.Command;
 import com.todo.storage.DataStorageInterface;
+import com.todo.server.NotificationService;
 import com.todo.util.GsonUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -13,10 +14,14 @@ import java.util.Map;
 public class AddUserToBoardCommand implements Command {
     private final DataStorageInterface storage;
     private final Map<String, String> userSessions;
+    private final NotificationService notificationService;
     
-    public AddUserToBoardCommand(DataStorageInterface storage, Map<String, String> userSessions) {
+    public AddUserToBoardCommand(DataStorageInterface storage, 
+                               Map<String, String> userSessions,
+                               NotificationService notificationService) {
         this.storage = storage;
         this.userSessions = userSessions;
+        this.notificationService = notificationService;
     }
     
     @Override
@@ -49,6 +54,9 @@ public class AddUserToBoardCommand implements Command {
         targetUser.addMemberBoard(boardId);
         storage.addBoard(board);
         storage.addUser(targetUser);
+        
+        // Send notification to all board members
+        notificationService.notifyUserAddedToBoard(boardId, targetUserId);
         
         return Message.success("User added to board successfully", null);
     }
