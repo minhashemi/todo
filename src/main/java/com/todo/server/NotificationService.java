@@ -155,7 +155,13 @@ public class NotificationService {
         User newUser = storage.getUserById(newUserId);
         if (newUser != null) {
             String message = "User " + newUser.getUsername() + " added to board";
+            
+            // Send notification to all existing board members
             broadcastBoardNotification(boardId, "user_added", newUser.getUsername());
+            
+            // Send direct notification to the newly added user
+            sendNotificationToUser(newUserId, "user_added_to_board", newUser.getUsername());
+            
             sendUdpNotification("USER_ADDED:" + boardId + ":" + newUser.getUsername());
         }
     }

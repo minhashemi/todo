@@ -32,6 +32,10 @@ public class ViewBoardCommand implements Command {
             return Message.error("Board not found");
         }
         
+        System.out.println("DEBUG: Checking access for user " + userId + " to board " + boardId);
+        System.out.println("DEBUG: Board members: " + board.getMemberIds());
+        System.out.println("DEBUG: Is member: " + board.isMember(userId));
+        
         if (!board.isMember(userId)) {
             return Message.error("Access denied");
         }

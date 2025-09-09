@@ -318,6 +318,13 @@ public class Client {
                     }
                     break;
                     
+                case "user_added_to_board":
+                    if (data instanceof String) {
+                        String username = (String) data;
+                        System.out.println("🎉 You have been added to a board by: " + username);
+                    }
+                    break;
+                    
                 default:
                     System.out.println("🔔 Notification: " + notificationType + " - " + data);
             }

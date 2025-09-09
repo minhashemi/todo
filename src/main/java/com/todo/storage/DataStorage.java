@@ -83,7 +83,7 @@ public class DataStorage implements DataStorageInterface {
     public void addUser(User user) {
         lock.writeLock().lock();
         try {
-            String sql = "INSERT INTO users (id, username, password_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT OR REPLACE INTO users (id, username, password_hash, salt, created_at) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setString(1, user.getId());
                 stmt.setString(2, user.getUsername());
@@ -155,7 +155,7 @@ public class DataStorage implements DataStorageInterface {
         lock.writeLock().lock();
         try {
             // Insert board
-            String sql = "INSERT INTO boards (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT OR REPLACE INTO boards (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setString(1, board.getId());
                 stmt.setString(2, board.getName());
@@ -262,7 +262,7 @@ public class DataStorage implements DataStorageInterface {
     public void addTask(Task task) {
         lock.writeLock().lock();
         try {
-            String sql = "INSERT INTO tasks (id, title, description, status, priority, board_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT OR REPLACE INTO tasks (id, title, description, status, priority, board_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setString(1, task.getId());
                 stmt.setString(2, task.getTitle());
