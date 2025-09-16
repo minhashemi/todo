@@ -1,47 +1,62 @@
 package com.todo.model;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Board model class representing a collaborative workspace
+ * Manages board members and access permissions
+ */
 public class Board {
-    private String id;
-    private String name;
-    private String ownerId;
-    private LocalDateTime createdAt;
-    private Set<String> memberIds;
-
-    public Board(String name, String ownerId) {
-        this.id = generateId();
+    // Board properties - all final for immutability
+    private final String id;              // Unique board identifier
+    private final String name;            // Board display name
+    private final String owner;           // Username of board owner
+    private final Set<String> members;    // Set of member usernames
+    
+    /**
+     * Constructor creates a new board with owner as first member
+     * @param id - unique board ID
+     * @param name - board display name
+     * @param owner - username of board owner
+     */
+    public Board(String id, String name, String owner) {
+        this.id = id;
         this.name = name;
-        this.ownerId = ownerId;
-        this.createdAt = LocalDateTime.now();
-        this.memberIds = new HashSet<>();
-        this.memberIds.add(ownerId); // Owner is automatically a member
+        this.owner = owner;
+        this.members = new HashSet<>();
+        this.members.add(owner);  // Owner is automatically a member
     }
-
-    private String generateId() {
-        return "board_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+    
+    /**
+     * Adds a new member to the board
+     * @param username - username to add as member
+     */
+    public void addMember(String username) {
+        members.add(username);
     }
-
-    // Getters and setters
+    
+    /**
+     * Checks if user has access to this board
+     * @param username - username to check
+     * @return true if user is owner or member, false otherwise
+     */
+    public boolean hasAccess(String username) {
+        return owner.equals(username) || members.contains(username);
+    }
+    
+    /**
+     * Checks if user is the owner of this board
+     * @param username - username to check
+     * @return true if user is owner, false otherwise
+     */
+    public boolean isOwner(String username) {
+        return owner.equals(username);
+    }
+    
+    // Getters for board data
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
     public String getName() { return name; }
-    public String getOwnerId() { return ownerId; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public Set<String> getMemberIds() { return memberIds; }
-
-    public void addMember(String userId) {
-        memberIds.add(userId);
-    }
-
-    public boolean isMember(String userId) {
-        return memberIds.contains(userId);
-    }
-
-    public boolean isOwner(String userId) {
-        return ownerId.equals(userId);
-    }
+    public String getOwner() { return owner; }
+    public Set<String> getMembers() { return members; }
 }

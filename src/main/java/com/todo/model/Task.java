@@ -1,62 +1,50 @@
 package com.todo.model;
 
-import java.time.LocalDateTime;
-
+/**
+ * Task model class representing a todo item
+ * Manages task properties and status updates
+ */
 public class Task {
-    public enum Status {
-        TODO, IN_PROGRESS, DONE
-    }
-
-    public enum Priority {
-        LOW, MEDIUM, HIGH
-    }
-
-    private String id;
-    private String title;
-    private String description;
-    private Status status;
-    private Priority priority;
-    private String boardId;
-    private LocalDateTime createdAt;
-
-    public Task(String title, String description, Priority priority, String boardId) {
-        this.id = generateId();
+    // Task properties
+    private final String id;          // Unique task identifier
+    private String title;             // Task title
+    private String description;       // Task description
+    private String status;            // Current status (TODO, IN_PROGRESS, DONE)
+    
+    /**
+     * Constructor creates a new task with TODO status
+     * @param id - unique task ID
+     * @param title - task title
+     * @param description - task description
+     */
+    public Task(String id, String title, String description) {
+        this.id = id;
         this.title = title;
         this.description = description;
-        this.status = Status.TODO;
-        this.priority = priority;
-        this.boardId = boardId;
-        this.createdAt = LocalDateTime.now();
+        this.status = "TODO";  // Default status
     }
-
-    private String generateId() {
-        return "task_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
-    }
-
-    // Getters and setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public Status getStatus() { return status; }
-    public Priority getPriority() { return priority; }
-    public String getBoardId() { return boardId; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public void setStatus(Status status) {
+    
+    /**
+     * Updates the task status
+     * @param status - new status (TODO, IN_PROGRESS, DONE)
+     */
+    public void updateStatus(String status) {
         this.status = status;
     }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
+    
+    // Getters for task data
+    public String getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public String getStatus() { return status; }
+    
+    /**
+     * String representation of task for display
+     * Format: id:title:status
+     * @return formatted task string
+     */
+    @Override
+    public String toString() {
+        return id + ":" + title + ":" + status;
     }
 }
