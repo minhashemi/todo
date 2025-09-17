@@ -2,6 +2,7 @@ package com.todo;
 
 import com.todo.model.Task;
 import com.todo.service.*;
+import com.todo.storage.DatabaseStorage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -18,8 +19,9 @@ public class Server {
     private static final int UDP_PORT = 4321;  // Port for notifications
     
     // Service layer components (following Clean Code principles)
-    private final UserService userService = new UserService();           // Handles user operations
-    private final BoardService boardService = new BoardService();        // Handles board/task operations
+    private final DatabaseStorage database;                              // Database storage
+    private final UserService userService;                              // Handles user operations
+    private final BoardService boardService;                            // Handles board/task operations
     private final NotificationService notificationService;               // Handles real-time notifications
     
     // Thread-safe data structures for concurrent access
@@ -31,9 +33,12 @@ public class Server {
     private final ExecutorService pool = Executors.newCachedThreadPool();
 
     /**
-     * Constructor initializes the notification service
+     * Constructor initializes the database and services
      */
     public Server() {
+        this.database = new DatabaseStorage();
+        this.userService = new UserService(database);
+        this.boardService = new BoardService(database);
         this.notificationService = new NotificationService(clients);
     }
     

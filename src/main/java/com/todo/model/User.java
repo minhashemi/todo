@@ -24,6 +24,18 @@ public class User {
         this.salt = UUID.randomUUID().toString();  // Generate random salt
         this.passwordHash = hash(password + salt);  // Hash password + salt
     }
+
+    /**
+     * Constructor for loading user from database
+     * @param username - username
+     * @param passwordHash - pre-hashed password
+     * @param salt - salt used for hashing
+     */
+    public User(String username, String passwordHash, String salt) {
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.salt = salt;
+    }
     
     /**
      * Verifies if provided password matches stored hash
