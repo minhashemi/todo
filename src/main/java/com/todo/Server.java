@@ -3,10 +3,12 @@ package com.todo;
 import com.todo.model.Task;
 import com.todo.service.*;
 import com.todo.storage.DatabaseStorage;
+import com.todo.protocol.Message;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Main Server class for the Todo List Application
@@ -80,7 +82,7 @@ public class Server {
 
     /**
      * Starts UDP server for notifications
-     * Receives and logs UDP messages (currently just for demonstration)
+     * Receives and logs UDP messages
      */
     private void startUdpServer() {
         try (DatagramSocket ds = new DatagramSocket(UDP_PORT)) {
@@ -129,217 +131,283 @@ public class Server {
     }
 
     /**
-     * Processes incoming commands from clients
+     * Processes incoming JSON messages from clients
      * Routes commands to appropriate handler methods
-     * @param input - raw command string from client
+     * @param jsonInput - JSON message from client
      * @param clientId - ID of the client sending the command
-     * @return response string to send back to client
+     * @return JSON response to send back to client
      */
-    private String processCommand(String input, String clientId) {
-        String[] parts = input.split(" ", 3);  // Split into command and arguments
-        String cmd = parts[0];
-        
-        // Route command to appropriate handler method
-        return switch (cmd) {
-            case "register" -> handleRegister(parts[1], parts[2]);
-            case "login" -> handleLogin(clientId, parts[1], parts[2]);
-            case "logout" -> handleLogout(clientId);
-            case "create_board" -> handleCreateBoard(clientId, parts[1]);
-            case "list_boards" -> handleListBoards(clientId);
-            case "add_user_to_board" -> handleAddUserToBoard(clientId, parts[1], parts[2]);
-            case "view_board" -> handleViewBoard(clientId, parts[1]);
-            case "add_task" -> handleAddTask(clientId, parts[1], parts[2]);
-            case "list_tasks" -> handleListTasks(clientId);
-            case "update_task_status" -> handleUpdateTaskStatus(clientId, parts[1], parts[2]);
-            case "delete_task" -> handleDeleteTask(clientId, parts[1]);
-            default -> "ERROR: Unknown command";
-        };
+    private String processCommand(String jsonInput, String clientId) {
+        try {
+            Message message = Message.fromJson(jsonInput);
+            String command = message.getCommand();
+            Object payload = message.getPayload();
+            
+            // Route command to appropriate handler method
+            Message response = switch (command) {
+                case "register" -> handleRegister(payload, clientId);
+                case "login" -> handleLogin(payload, clientId);
+                case "logout" -> handleLogout(clientId);
+                case "create_board" -> handleCreateBoard(payload, clientId);
+                case "list_boards" -> handleListBoards(clientId);
+                case "add_user_to_board" -> handleAddUserToBoard(payload, clientId);
+                case "view_board" -> handleViewBoard(payload, clientId);
+                case "add_task" -> handleAddTask(payload, clientId);
+                case "list_tasks" -> handleListTasks(clientId);
+                case "update_task_status" -> handleUpdateTaskStatus(payload, clientId);
+                case "delete_task" -> handleDeleteTask(payload, clientId);
+                default -> Message.error("Unknown command: " + command);
+            };
+            
+            return response.toJson();
+        } catch (Exception e) {
+            return Message.error("Server error: " + e.getMessage()).toJson();
+        }
     }
 
     // ==================== USER AUTHENTICATION HANDLERS ====================
     
     /**
      * Handles user registration command
-     * @param username - username to register
-     * @param password - password for the user
-     * @return success or error message
+     * @param payload - JSON payload with username and password
+     * @param clientId - client ID
+     * @return JSON response
      */
-    private String handleRegister(String username, String password) {
-        return userService.register(username, password) ? 
-            "SUCCESS: Registered" : "ERROR: User exists";
+    private Message handleRegister(Object payload, String clientId) {
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String username = data.get("username");
+            String password = data.get("password");
+            
+            return userService.register(username, password) ? 
+                Message.success("Registered successfully", null) : 
+                Message.error("User already exists");
+        } catch (Exception e) {
+            return Message.error("Invalid registration data");
+        }
     }
 
     /**
      * Handles user login command
+     * @param payload - JSON payload with username and password
      * @param clientId - ID of the client logging in
-     * @param username - username to login
-     * @param password - password to verify
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleLogin(String clientId, String username, String password) {
-        if (userService.login(username, password)) {
-            sessions.put(clientId, username);  // Store session
-            return "SUCCESS: Logged in";
+    private Message handleLogin(Object payload, String clientId) {
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String username = data.get("username");
+            String password = data.get("password");
+            
+            if (userService.login(username, password)) {
+                sessions.put(clientId, username);  // Store session
+                return Message.success("Logged in successfully", null);
+            }
+            return Message.error("Invalid credentials");
+        } catch (Exception e) {
+            return Message.error("Invalid login data");
         }
-        return "ERROR: Invalid credentials";
     }
 
     /**
      * Handles user logout command
      * @param clientId - ID of the client logging out
-     * @return success message
+     * @return JSON response
      */
-    private String handleLogout(String clientId) {
+    private Message handleLogout(String clientId) {
         sessions.remove(clientId);      // Remove session
         currentBoard.remove(clientId);  // Clear current board
-        return "SUCCESS: Logged out";
+        return Message.success("Logged out successfully", null);
     }
 
     // ==================== BOARD MANAGEMENT HANDLERS ====================
     
     /**
      * Handles board creation command
+     * @param payload - JSON payload with board name
      * @param clientId - ID of the client creating the board
-     * @param name - name of the board to create
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleCreateBoard(String clientId, String name) {
+    private Message handleCreateBoard(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
-        String boardId = boardService.createBoard(name, user);
-        notificationService.notifyBoardCreated(boardId);  // Notify all clients
-        return "SUCCESS: Board created " + boardId;
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String name = data.get("name");
+            
+            String boardId = boardService.createBoard(name, user);
+            notificationService.notifyBoardCreated(boardId);  // Notify all clients
+            return Message.success("Board created successfully", boardId);
+        } catch (Exception e) {
+            return Message.error("Invalid board data");
+        }
     }
 
     /**
      * Handles board listing command
      * @param clientId - ID of the client requesting boards
-     * @return list of accessible boards or error message
+     * @return JSON response with board list
      */
-    private String handleListBoards(String clientId) {
+    private Message handleListBoards(String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
         List<String> boards = boardService.getUserBoards(user);
-        return boards.isEmpty() ? "No boards" : String.join(",", boards);
+        return Message.success("Boards retrieved", boards.isEmpty() ? "No boards" : boards);
     }
 
     /**
      * Handles adding user to board command
+     * @param payload - JSON payload with boardId and username
      * @param clientId - ID of the client making the request
-     * @param boardId - ID of the board to add user to
-     * @param username - username to add to the board
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleAddUserToBoard(String clientId, String boardId, String username) {
+    private Message handleAddUserToBoard(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
-        if (!userService.userExists(username)) return "ERROR: User not found";
+        if (user == null) return Message.error("Not logged in");
         
-        if (boardService.addUserToBoard(boardId, username, user)) {
-            notificationService.notifyUserAdded(username);  // Notify all clients
-            return "SUCCESS: User added";
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String boardId = data.get("boardId");
+            String username = data.get("username");
+            
+            if (!userService.userExists(username)) return Message.error("User not found");
+            
+            if (boardService.addUserToBoard(boardId, username, user)) {
+                notificationService.notifyUserAdded(username);  // Notify all clients
+                return Message.success("User added to board", null);
+            }
+            return Message.error("Access denied");
+        } catch (Exception e) {
+            return Message.error("Invalid data");
         }
-        return "ERROR: Access denied";
     }
 
     /**
      * Handles board viewing command (enters board view mode)
+     * @param payload - JSON payload with boardId
      * @param clientId - ID of the client viewing the board
-     * @param boardId - ID of the board to view
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleViewBoard(String clientId, String boardId) {
+    private Message handleViewBoard(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
-        if (boardService.canAccessBoard(boardId, user)) {
-            currentBoard.put(clientId, boardId);  // Set current board for client
-            String boardName = boardService.getBoardName(boardId);
-            return "SUCCESS: Viewing board " + boardName;
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String boardId = data.get("boardId");
+            
+            if (boardService.canAccessBoard(boardId, user)) {
+                currentBoard.put(clientId, boardId);  // Set current board for client
+                String boardName = boardService.getBoardName(boardId);
+                return Message.success("Viewing board: " + boardName, null);
+            }
+            return Message.error("Access denied");
+        } catch (Exception e) {
+            return Message.error("Invalid board data");
         }
-        return "ERROR: Access denied";
     }
 
     // ==================== TASK MANAGEMENT HANDLERS ====================
     
     /**
      * Handles task creation command (requires board view mode)
+     * @param payload - JSON payload with title and description
      * @param clientId - ID of the client creating the task
-     * @param title - title of the task
-     * @param desc - description of the task
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleAddTask(String clientId, String title, String desc) {
+    private Message handleAddTask(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
         String boardId = currentBoard.get(clientId);
-        if (boardId == null) return "ERROR: Not in board view";
+        if (boardId == null) return Message.error("Not in board view");
         
-        String taskId = "t" + System.currentTimeMillis();  // Generate unique task ID
-        Task task = new Task(taskId, title, desc);
-        boardService.addTask(boardId, task);
-        notificationService.notifyTaskAdded(taskId, title);  // Notify all clients
-        return "SUCCESS: Task added " + taskId;
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String title = data.get("title");
+            String desc = data.get("description");
+            
+            String taskId = "t" + System.currentTimeMillis();  // Generate unique task ID
+            Task task = new Task(taskId, title, desc);
+            boardService.addTask(boardId, task);
+            notificationService.notifyTaskAdded(taskId, title);  // Notify all clients
+            return Message.success("Task added successfully", taskId);
+        } catch (Exception e) {
+            return Message.error("Invalid task data");
+        }
     }
 
     /**
      * Handles task listing command (requires board view mode)
      * @param clientId - ID of the client requesting tasks
-     * @return list of tasks or error message
+     * @return JSON response with task list
      */
-    private String handleListTasks(String clientId) {
+    private Message handleListTasks(String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
         String boardId = currentBoard.get(clientId);
-        if (boardId == null) return "ERROR: Not in board view";
+        if (boardId == null) return Message.error("Not in board view");
         
         List<Task> tasks = boardService.getTasks(boardId);
-        return tasks.isEmpty() ? "No tasks" : 
-            tasks.stream().map(Task::toString).reduce((a, b) -> a + "," + b).orElse("");
+        List<String> taskStrings = tasks.stream().map(Task::toString).collect(Collectors.toList());
+        return Message.success("Tasks retrieved", taskStrings.isEmpty() ? "No tasks" : taskStrings);
     }
 
     /**
      * Handles task status update command (requires board view mode)
+     * @param payload - JSON payload with taskId and status
      * @param clientId - ID of the client updating the task
-     * @param taskId - ID of the task to update
-     * @param status - new status (TODO, IN_PROGRESS, DONE)
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleUpdateTaskStatus(String clientId, String taskId, String status) {
+    private Message handleUpdateTaskStatus(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
         String boardId = currentBoard.get(clientId);
-        if (boardId == null) return "ERROR: Not in board view";
+        if (boardId == null) return Message.error("Not in board view");
         
-        if (boardService.updateTaskStatus(boardId, taskId, status)) {
-            notificationService.notifyTaskUpdated(taskId, status);  // Notify all clients
-            return "SUCCESS: Task updated";
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String taskId = data.get("taskId");
+            String status = data.get("status");
+            
+            if (boardService.updateTaskStatus(boardId, taskId, status)) {
+                notificationService.notifyTaskUpdated(taskId, status);  // Notify all clients
+                return Message.success("Task updated successfully", null);
+            }
+            return Message.error("Task not found");
+        } catch (Exception e) {
+            return Message.error("Invalid task data");
         }
-        return "ERROR: Task not found";
     }
 
     /**
      * Handles task deletion command (requires board view mode)
+     * @param payload - JSON payload with taskId
      * @param clientId - ID of the client deleting the task
-     * @param taskId - ID of the task to delete
-     * @return success or error message
+     * @return JSON response
      */
-    private String handleDeleteTask(String clientId, String taskId) {
+    private Message handleDeleteTask(Object payload, String clientId) {
         String user = sessions.get(clientId);
-        if (user == null) return "ERROR: Not logged in";
+        if (user == null) return Message.error("Not logged in");
         
         String boardId = currentBoard.get(clientId);
-        if (boardId == null) return "ERROR: Not in board view";
+        if (boardId == null) return Message.error("Not in board view");
         
-        if (boardService.deleteTask(boardId, taskId)) {
-            notificationService.notifyTaskDeleted(taskId);  // Notify all clients
-            return "SUCCESS: Task deleted";
+        try {
+            Map<String, String> data = (Map<String, String>) payload;
+            String taskId = data.get("taskId");
+            
+            if (boardService.deleteTask(boardId, taskId)) {
+                notificationService.notifyTaskDeleted(taskId);  // Notify all clients
+                return Message.success("Task deleted successfully", null);
+            }
+            return Message.error("Task not found");
+        } catch (Exception e) {
+            return Message.error("Invalid task data");
         }
-        return "ERROR: Task not found";
     }
 }

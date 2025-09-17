@@ -1,5 +1,6 @@
 package com.todo;
 
+import com.todo.protocol.Message;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -83,8 +84,20 @@ public class Client {
                         String[] parts = line.split(":", 3);
                         System.out.println("🔔 " + parts[1] + ": " + parts[2]);
                     } else {
-                        // Handle command responses
-                        System.out.println("📋 " + line);
+                        // Handle JSON responses
+                        try {
+                            Message response = Message.fromJson(line);
+                            if ("success".equals(response.getStatus())) {
+                                System.out.println("✅ " + response.getMessage());
+                                if (response.getData() != null) {
+                                    System.out.println("📊 " + response.getData());
+                                }
+                            } else if ("error".equals(response.getStatus())) {
+                                System.out.println("❌ " + response.getMessage());
+                            }
+                        } catch (Exception e) {
+                            System.out.println("📋 " + line);
+                        }
                     }
                 }
             } catch (Exception e) { 
@@ -112,7 +125,7 @@ public class Client {
     }
 
     /**
-     * Processes user commands and sends them to server
+     * Processes user commands and sends them to server as JSON
      * Handles command validation and board view mode requirements
      * @param input - user input command
      */
@@ -122,38 +135,76 @@ public class Client {
         
         switch (cmd) {
             // User authentication commands
-            case "register" -> send("register " + parts[1] + " " + parts[2]);
-            case "login" -> send("login " + parts[1] + " " + parts[2]);
+            case "register" -> {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("username", parts[1]);
+                payload.put("password", parts[2]);
+                send(new Message("register", payload).toJson());
+            }
+            case "login" -> {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("username", parts[1]);
+                payload.put("password", parts[2]);
+                send(new Message("login", payload).toJson());
+            }
             case "logout" -> { 
-                send("logout"); 
+                send(new Message("logout", null).toJson()); 
                 inBoard.set(false);  // Exit board view mode
             }
             
             // Board management commands
-            case "create_board" -> send("create_board " + parts[1]);
-            case "list_boards" -> send("list_boards");
-            case "add_user_to_board" -> send("add_user_to_board " + parts[1] + " " + parts[2]);
+            case "create_board" -> {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("name", parts[1]);
+                send(new Message("create_board", payload).toJson());
+            }
+            case "list_boards" -> send(new Message("list_boards", null).toJson());
+            case "add_user_to_board" -> {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("boardId", parts[1]);
+                payload.put("username", parts[2]);
+                send(new Message("add_user_to_board", payload).toJson());
+            }
             case "view_board" -> { 
-                send("view_board " + parts[1]); 
+                Map<String, String> payload = new HashMap<>();
+                payload.put("boardId", parts[1]);
+                send(new Message("view_board", payload).toJson()); 
                 inBoard.set(true);  // Enter board view mode
             }
             
             // Task management commands (require board view mode)
             case "add_task" -> {
-                if (inBoard.get()) send("add_task " + parts[1] + " " + parts[2]);
-                else System.out.println("❌ Must be in board view first");
+                if (inBoard.get()) {
+                    Map<String, String> payload = new HashMap<>();
+                    payload.put("title", parts[1]);
+                    payload.put("description", parts[2]);
+                    send(new Message("add_task", payload).toJson());
+                } else {
+                    System.out.println("❌ Must be in board view first");
+                }
             }
             case "list_tasks" -> {
-                if (inBoard.get()) send("list_tasks");
+                if (inBoard.get()) send(new Message("list_tasks", null).toJson());
                 else System.out.println("❌ Must be in board view first");
             }
             case "update_task_status" -> {
-                if (inBoard.get()) send("update_task_status " + parts[1] + " " + parts[2]);
-                else System.out.println("❌ Must be in board view first");
+                if (inBoard.get()) {
+                    Map<String, String> payload = new HashMap<>();
+                    payload.put("taskId", parts[1]);
+                    payload.put("status", parts[2]);
+                    send(new Message("update_task_status", payload).toJson());
+                } else {
+                    System.out.println("❌ Must be in board view first");
+                }
             }
             case "delete_task" -> {
-                if (inBoard.get()) send("delete_task " + parts[1]);
-                else System.out.println("❌ Must be in board view first");
+                if (inBoard.get()) {
+                    Map<String, String> payload = new HashMap<>();
+                    payload.put("taskId", parts[1]);
+                    send(new Message("delete_task", payload).toJson());
+                } else {
+                    System.out.println("❌ Must be in board view first");
+                }
             }
             default -> System.out.println("❌ Unknown command");
         }
